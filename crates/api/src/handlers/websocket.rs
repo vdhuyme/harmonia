@@ -6,9 +6,8 @@ use axum::{
 };
 use axum::extract::ws::{Message, WebSocket};
 use redis::aio::PubSub;
-use tokio::sync::broadcast;
+use futures_util::StreamExt;
 
-use crate::state::AppState;
 use crate::state::AppState;
 
 /// Register the websocket route (to be called from the main API router)
@@ -25,16 +24,14 @@ pub async fn ws_handler(
     Path(room_id): Path<String>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // In a real implementation, you would extract authentication info here.
-    // For this scaffold we accept all connections.
     ws.on_upgrade(move |socket| handle_socket(socket, room_id, state))
 }
 
 /// Core socket handling logic
 async fn handle_socket(mut socket: WebSocket, room_id: String, state: AppState) {
-    // 1. Create a new PubSub connection for this WebSocket session
-    let mut pubsub = match state.redis.get_async_connection().await {
-        Ok(mut conn) => match conn.as_pubsub().await {
+    // 1. Create a PubSub connection
+    let mut pubsub: PubSub = match state.redis.get_async_connection().await {
+        Ok(conn) => match conn.into_pubsub() {
             Ok(p) => p,
             Err(e) => {
                 let _ = socket
@@ -71,12 +68,11 @@ async fn handle_socket(mut socket: WebSocket, room_id: String, state: AppState) 
     }
 
     // 4. Forward messages from Redis PubSub to the WebSocket client
-    while let Ok(msg) = pubsub.on_message().await {
-        let payload = msg.get_payload::<String>().unwrap_or_default();
+    let mut pubsub_stream = pubsub.on_message();
+    while let Some(msg) = pubsub_stream.next().await {
+        let payload: String = msg.get_payload().unwrap_or_default();
         if socket.send(Message::Text(payload)).await.is_err() {
             break;
         }
     }
-
-    // Connection closed – cleanup happens automatically.
 }

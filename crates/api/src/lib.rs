@@ -18,7 +18,7 @@ use crate::handlers::websocket;
 use std::sync::Arc;
 
 /// Build the API router
-pub fn router(state: AppState) -> Router {
+pub fn router(state: AppState) -> Router< (AppState, Arc<jwt::JwtHandler>) > {
     let jwt_state = Arc::new(jwt::JwtHandler::new(
         state.jwt_secret.as_bytes(),
     ));

@@ -62,6 +62,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # Testing
 mockall = "0.12"
 tokio-test = "0.4"
+futures-util = "0.3"
 
 [profile.release]
 opt-level = 3

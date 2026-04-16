@@ -6,7 +6,6 @@ use axum::{
     Router,
 };
 use futures_util::StreamExt;
-use redis::aio::PubSub;
 
 use crate::state::AppState;
 
@@ -30,17 +29,8 @@ async fn handle_socket(
     room_id: String,
     state: AppState,
 ) {
-    // 1. Create a PubSub connection
-    let mut pubsub: PubSub = match state.redis.get_async_connection().await {
-        Ok(conn) => match conn.into_pubsub() {
-            Ok(p) => p,
-            Err(e) => {
-                let _ = socket
-                    .send(Message::Text(format!("pubsub error: {}", e)))
-                    .await;
-                return;
-            }
-        },
+    let mut pubsub_conn = match state.redis.get_async_connection().await {
+        Ok(conn) => conn,
         Err(e) => {
             let _ = socket
                 .send(Message::Text(format!("redis error: {}", e)))
@@ -49,7 +39,9 @@ async fn handle_socket(
         }
     };
 
-    // 2. Subscribe to the room channel
+    // Fixed: into_pubsub() in redis-rs aio returns the PubSub object directly, not a Result
+    let mut pubsub = pubsub_conn.into_pubsub();
+
     let channel_name = format!("room:{}", room_id);
     if let Err(e) = pubsub.subscribe(&channel_name).await {
         let _ = socket
@@ -58,7 +50,6 @@ async fn handle_socket(
         return;
     }
 
-    // 3. Send initial empty queue state (placeholder)
     let initial_state = serde_json::json!({ "room": room_id, "queue": [] });
     if socket
         .send(Message::Text(initial_state.to_string()))
@@ -68,9 +59,9 @@ async fn handle_socket(
         return;
     }
 
-    // 4. Forward messages from Redis PubSub to the WebSocket client
     let mut pubsub_stream = pubsub.on_message();
     while let Some(msg) = pubsub_stream.next().await {
+        // Explicitly annotate the type for get_payload to resolve E0282
         let payload: String = msg.get_payload().unwrap_or_default();
         if socket.send(Message::Text(payload)).await.is_err() {
             break;

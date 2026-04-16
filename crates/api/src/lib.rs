@@ -18,7 +18,7 @@ use axum::{
 use std::sync::Arc;
 
 /// Build the API router
-pub fn router(state: AppState) -> Router<(AppState, Arc<jwt::JwtHandler>)> {
+pub fn router(state: AppState) -> Router {
     let jwt_state = Arc::new(jwt::JwtHandler::new(state.jwt_secret.as_bytes()));
 
     Router::new()
@@ -43,7 +43,8 @@ pub fn router(state: AppState) -> Router<(AppState, Arc<jwt::JwtHandler>)> {
         .route("/admin/room/map", post(handlers::admin::map_room))
         .layer(axum::middleware::from_fn(middleware_rate_limit))
         .nest("/ws", websocket::router())
-        .with_state((state, jwt_state))
+        .with_state(state)
+        .with_state(jwt_state)
 }
 
 /// Simple rate limiting middleware

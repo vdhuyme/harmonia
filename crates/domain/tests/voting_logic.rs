@@ -1,3 +1,4 @@
+use domain::AppError;
 use domain::rules::voting::*;
 
 #[test]
@@ -13,7 +14,7 @@ fn test_validate_vote_duplicate() {
     let result = validate_vote(true);
     assert!(result.is_err());
     match result {
-        Err(core::AppError::DuplicateVote) => (),
+        Err(AppError::DuplicateVote) => (),
         _ => panic!("Expected DuplicateVote error"),
     }
 }
@@ -31,7 +32,7 @@ fn test_validate_unvote_no_vote() {
     let result = validate_unvote(false);
     assert!(result.is_err());
     match result {
-        Err(core::AppError::ValidationFailed(msg)) => {
+        Err(AppError::ValidationFailed(msg)) => {
             assert!(msg.contains("has not voted"))
         }
         _ => panic!("Expected ValidationFailed error"),

@@ -86,17 +86,16 @@ impl MusicProvider for YouTubeProvider {
         &self,
         query: &str,
     ) -> Result<Vec<ProviderTrack>, AppError> {
-        let url = format!("{}/search", self.base_url);
+        let url = format!(
+            "{}/search?part=snippet&q={}&type=video&maxResults=10&key={}",
+            self.base_url,
+            urlencoding::encode(query),
+            self.api_key
+        );
+        
         let response = self
             .http_client
             .get(&url)
-            .query(&[
-                ("part", "snippet"),
-                ("q", query),
-                ("type", "video"),
-                ("maxResults", "10"),
-                ("key", &self.api_key),
-            ])
             .send()
             .await
             .map_err(|e| {

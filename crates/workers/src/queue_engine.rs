@@ -31,11 +31,18 @@ impl QueueEngine {
             return None;
         }
 
-        // Find item with highest priority score
+        // Find item with highest priority score. 
+        // In case of tie, the first item encountered is preferred.
         pending_items
             .iter()
-            .max_by_key(|item| Self::calculate_priority_score(item))
-            .cloned()
+            .enumerate()
+            .max_by(|(idx_a, item_a), (idx_b, item_b)| {
+                let score_a = Self::calculate_priority_score(item_a);
+                let score_b = Self::calculate_priority_score(item_b);
+                
+                score_a.cmp(&score_b).then_with(|| idx_b.cmp(&idx_a))
+            })
+            .map(|(_, item)| item.clone())
     }
 
     /// Validate song can be played

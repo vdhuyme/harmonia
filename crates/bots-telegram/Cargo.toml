@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+teloxide = "0.12"
 domain = { path = "../domain" }
 shared = { path = "../shared" }
 tokio = { workspace = true }

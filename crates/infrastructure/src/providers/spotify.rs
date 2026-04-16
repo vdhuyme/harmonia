@@ -147,13 +147,16 @@ impl MusicProvider for SpotifyProvider {
         &self,
         query: &str,
     ) -> Result<Vec<ProviderTrack>, AppError> {
-        let url = format!("{}/search", self.base_url);
+        let url = format!(
+            "{}/search?q={}&type=track&limit=10",
+            self.base_url,
+            urlencoding::encode(query)
+        );
 
         let response = self
             .http_client
             .get(&url)
             .header("Authorization", self.auth_header())
-            .query(&[("q", query), ("type", "track"), ("limit", "10")])
             .send()
             .await
             .map_err(|e| {
@@ -200,11 +203,14 @@ impl MusicProvider for SpotifyProvider {
         device_id: &str,
         track_id: &str,
     ) -> Result<(), AppError> {
-        let url = format!("{}/me/player/play", self.base_url);
+        let url = format!(
+            "{}/me/player/play?device_id={}",
+            self.base_url,
+            device_id
+        );
 
         let body = serde_json::json!({
-            "uris": [format!("spotify:track:{}", track_id)],
-            "device_id": device_id
+            "uris": [format!("spotify:track:{}", track_id)]
         });
 
         let response = self
@@ -212,7 +218,6 @@ impl MusicProvider for SpotifyProvider {
             .put(&url)
             .header("Authorization", self.auth_header())
             .header("Content-Type", "application/json")
-            .query(&[("device_id", device_id)])
             .json(&body)
             .send()
             .await
@@ -232,13 +237,16 @@ impl MusicProvider for SpotifyProvider {
 
     /// Pause playback on a device
     async fn pause(&self, device_id: &str) -> Result<(), AppError> {
-        let url = format!("{}/me/player/pause", self.base_url);
+        let url = format!(
+            "{}/me/player/pause?device_id={}",
+            self.base_url,
+            device_id
+        );
 
         let response = self
             .http_client
             .put(&url)
             .header("Authorization", self.auth_header())
-            .query(&[("device_id", device_id)])
             .send()
             .await
             .map_err(|e| {
@@ -257,13 +265,16 @@ impl MusicProvider for SpotifyProvider {
 
     /// Skip to next track
     async fn skip(&self, device_id: &str) -> Result<(), AppError> {
-        let url = format!("{}/me/player/next", self.base_url);
+        let url = format!(
+            "{}/me/player/next?device_id={}",
+            self.base_url,
+            device_id
+        );
 
         let response = self
             .http_client
             .post(&url)
             .header("Authorization", self.auth_header())
-            .query(&[("device_id", device_id)])
             .send()
             .await
             .map_err(|e| {

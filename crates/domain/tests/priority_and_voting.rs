@@ -1,6 +1,6 @@
 use chrono::Utc;
 use domain::rules::*;
-use domain::{ProviderType, QueueItem, QueueStatus};
+use domain::{ProviderType, QueueItem, QueueStatus, AppError};
 
 #[test]
 fn test_priority_score_no_votes_no_decay() {
@@ -104,7 +104,7 @@ fn test_prevent_duplicate_vote() {
     let result = can_vote(true);
     assert!(result.is_err());
     match result {
-        Err(core::AppError::DuplicateVote) => (),
+        Err(AppError::DuplicateVote) => (),
         _ => panic!("Expected DuplicateVote error"),
     }
 }

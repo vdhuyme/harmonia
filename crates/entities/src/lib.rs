@@ -1,1 +1,0 @@
-//! SeaORM entities module

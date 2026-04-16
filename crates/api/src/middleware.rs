@@ -1,10 +1,7 @@
 use crate::error::AppError;
 use crate::jwt::{Claims, JwtHandler};
 use async_trait::async_trait;
-use axum::{
-    extract::FromRequestParts,
-    http::request::Parts,
-};
+use axum::{extract::FromRequestParts, http::request::Parts};
 use std::sync::Arc;
 
 /// Authenticated user extracted from JWT token

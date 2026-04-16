@@ -45,7 +45,9 @@ pub async fn login(
 ) -> Result<(StatusCode, Json<AuthResponse>), AppError> {
     // TODO: Validate email format
     if req.email.is_empty() || req.password.is_empty() {
-        return Err(AppError::BadRequest("Email and password required".to_string()));
+        return Err(AppError::BadRequest(
+            "Email and password required".to_string(),
+        ));
     }
 
     // TODO: Query database

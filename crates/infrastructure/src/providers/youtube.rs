@@ -82,7 +82,10 @@ impl YouTubeProvider {
 #[async_trait]
 impl MusicProvider for YouTubeProvider {
     /// Search for tracks (videos) on YouTube.
-    async fn search(&self, query: &str) -> Result<Vec<ProviderTrack>, AppError> {
+    async fn search(
+        &self,
+        query: &str,
+    ) -> Result<Vec<ProviderTrack>, AppError> {
         let url = format!("{}/search", self.base_url);
         let response = self
             .http_client
@@ -96,7 +99,9 @@ impl MusicProvider for YouTubeProvider {
             ])
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("YouTube API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("YouTube API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
             return Err(AppError::ProviderError(format!(
@@ -105,11 +110,12 @@ impl MusicProvider for YouTubeProvider {
             )));
         }
 
-        let results: YouTubeSearchResponse = response
-            .json()
-            .await
-            .map_err(|e| {
-                AppError::ProviderError(format!("Failed to parse YouTube search results: {}", e))
+        let results: YouTubeSearchResponse =
+            response.json().await.map_err(|e| {
+                AppError::ProviderError(format!(
+                    "Failed to parse YouTube search results: {}",
+                    e
+                ))
             })?;
 
         // Map YouTube items to generic ProviderTrack
@@ -128,7 +134,11 @@ impl MusicProvider for YouTubeProvider {
     }
 
     /// Play a track – placeholder implementation.
-    async fn play(&self, _device_id: &str, _track_id: &str) -> Result<(), AppError> {
+    async fn play(
+        &self,
+        _device_id: &str,
+        _track_id: &str,
+    ) -> Result<(), AppError> {
         // YouTube playback is handled client‑side (web player, TV, etc.).
         // The function is provided to satisfy the MusicProvider trait and
         // will be expanded in Phase 6.

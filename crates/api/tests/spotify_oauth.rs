@@ -57,7 +57,10 @@ fn test_spotify_token_response_parsing() {
     assert_eq!(response.access_token, "access_token_xyz");
     assert_eq!(response.token_type, "Bearer");
     assert_eq!(response.expires_in, 3600);
-    assert_eq!(response.refresh_token, Some("refresh_token_abc".to_string()));
+    assert_eq!(
+        response.refresh_token,
+        Some("refresh_token_abc".to_string())
+    );
 }
 
 #[test]
@@ -90,7 +93,8 @@ fn test_authorize_spotify_request_parsing() {
 #[test]
 fn test_spotify_auth_url_response_serialization() {
     let response = SpotifyAuthUrlResponse {
-        authorization_url: "https://accounts.spotify.com/authorize?...".to_string(),
+        authorization_url: "https://accounts.spotify.com/authorize?..."
+            .to_string(),
         state: "state_123".to_string(),
     };
 

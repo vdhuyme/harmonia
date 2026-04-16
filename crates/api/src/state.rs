@@ -14,14 +14,18 @@ pub struct AppState {
 impl AppState {
     /// Create a new AppState from environment
     pub fn from_env() -> Self {
-        let jwt_secret = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "default-dev-secret-change-in-production".to_string());
+        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+            "default-dev-secret-change-in-production".to_string()
+        });
 
         Self {
             jwt_secret,
             // Connect to Redis using the default URL (override with REDIS_URL env var)
-            redis: redis::Client::open(std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1/".to_string()))
-                .expect("Failed to create Redis client"),
+            redis: redis::Client::open(
+                std::env::var("REDIS_URL")
+                    .unwrap_or_else(|_| "redis://127.0.0.1/".to_string()),
+            )
+            .expect("Failed to create Redis client"),
         }
     }
 }
@@ -30,7 +34,8 @@ impl Default for AppState {
     fn default() -> Self {
         Self {
             jwt_secret: "default-dev-secret-change-in-production".to_string(),
-            redis: redis::Client::open("redis://127.0.0.1/").expect("Failed to create Redis client"),
+            redis: redis::Client::open("redis://127.0.0.1/")
+                .expect("Failed to create Redis client"),
         }
     }
 }

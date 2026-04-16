@@ -13,12 +13,19 @@ pub struct SpotifyOAuthConfig {
 impl SpotifyOAuthConfig {
     /// Create from environment variables
     pub fn from_env() -> Result<Self, AppError> {
-        let client_id = std::env::var("SPOTIFY_CLIENT_ID")
-            .map_err(|_| AppError::InternalError("SPOTIFY_CLIENT_ID not set".to_string()))?;
-        let client_secret = std::env::var("SPOTIFY_CLIENT_SECRET")
-            .map_err(|_| AppError::InternalError("SPOTIFY_CLIENT_SECRET not set".to_string()))?;
+        let client_id = std::env::var("SPOTIFY_CLIENT_ID").map_err(|_| {
+            AppError::InternalError("SPOTIFY_CLIENT_ID not set".to_string())
+        })?;
+        let client_secret =
+            std::env::var("SPOTIFY_CLIENT_SECRET").map_err(|_| {
+                AppError::InternalError(
+                    "SPOTIFY_CLIENT_SECRET not set".to_string(),
+                )
+            })?;
         let redirect_uri = std::env::var("SPOTIFY_REDIRECT_URI")
-            .unwrap_or_else(|_| "http://localhost:3000/auth/spotify/callback".to_string());
+            .unwrap_or_else(|_| {
+                "http://localhost:3000/auth/spotify/callback".to_string()
+            });
 
         Ok(Self {
             client_id,
@@ -120,7 +127,12 @@ pub async fn spotify_callback(
         .form(&params)
         .send()
         .await
-        .map_err(|e| AppError::InternalError(format!("Spotify token exchange failed: {}", e)))?;
+        .map_err(|e| {
+            AppError::InternalError(format!(
+                "Spotify token exchange failed: {}",
+                e
+            ))
+        })?;
 
     if !response.status().is_success() {
         return Err(AppError::InternalError(
@@ -128,10 +140,13 @@ pub async fn spotify_callback(
         ));
     }
 
-    let token_response: SpotifyTokenResponse = response
-        .json()
-        .await
-        .map_err(|e| AppError::InternalError(format!("Failed to parse token response: {}", e)))?;
+    let token_response: SpotifyTokenResponse =
+        response.json().await.map_err(|e| {
+            AppError::InternalError(format!(
+                "Failed to parse token response: {}",
+                e
+            ))
+        })?;
 
     // TODO: Get user info from Spotify API
     // TODO: Store encrypted token in database
@@ -171,7 +186,7 @@ mod tests {
         };
 
         let url = config.authorization_url("state123");
-        
+
         assert!(url.contains("https://accounts.spotify.com/authorize"));
         assert!(url.contains("client_id=client123"));
         assert!(url.contains("response_type=code"));
@@ -187,7 +202,8 @@ mod tests {
             "refresh_token": "refresh123"
         }"#;
 
-        let response: SpotifyTokenResponse = serde_json::from_str(json).unwrap();
+        let response: SpotifyTokenResponse =
+            serde_json::from_str(json).unwrap();
         assert_eq!(response.access_token, "token123");
         assert_eq!(response.expires_in, 3600);
     }

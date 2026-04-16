@@ -1,3 +1,4 @@
+use crate::{AppError, AppState};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -5,7 +6,6 @@ use axum::{
 };
 use domain::{RequestSongRequest, VoteRequest};
 use serde::{Deserialize, Serialize};
-use crate::{AppError, AppState};
 
 #[derive(Serialize, Deserialize)]
 pub struct QueueResponse {

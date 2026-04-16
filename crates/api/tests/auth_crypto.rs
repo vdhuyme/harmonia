@@ -22,7 +22,9 @@ fn test_jwt_handler_token_creation() {
     let handler = api::jwt::JwtHandler::new(secret);
     let claims = Claims::new("user123".to_string(), "admin".to_string(), 1);
 
-    let token = handler.create_token(&claims).expect("Failed to create token");
+    let token = handler
+        .create_token(&claims)
+        .expect("Failed to create token");
     assert!(!token.is_empty());
     assert!(token.contains('.'));
 }
@@ -36,7 +38,9 @@ fn test_jwt_handler_token_verification() {
     let token = handler
         .create_token(&original)
         .expect("Failed to create token");
-    let verified = handler.verify_token(&token).expect("Failed to verify token");
+    let verified = handler
+        .verify_token(&token)
+        .expect("Failed to verify token");
 
     assert_eq!(verified.sub, original.sub);
     assert_eq!(verified.role, original.role);
@@ -83,12 +87,8 @@ fn test_crypto_encryption_decryption() {
     let handler = api::crypto::CryptoHandler::new(&key);
     let plaintext = "spotify_token_abc123";
 
-    let encrypted = handler
-        .encrypt(plaintext)
-        .expect("Failed to encrypt");
-    let decrypted = handler
-        .decrypt(&encrypted)
-        .expect("Failed to decrypt");
+    let encrypted = handler.encrypt(plaintext).expect("Failed to encrypt");
+    let decrypted = handler.decrypt(&encrypted).expect("Failed to decrypt");
 
     assert_eq!(decrypted, plaintext);
 }
@@ -102,9 +102,7 @@ fn test_crypto_wrong_key_fails() {
     let handler2 = api::crypto::CryptoHandler::new(&key2);
 
     let plaintext = "spotify_token_abc123";
-    let encrypted = handler1
-        .encrypt(plaintext)
-        .expect("Failed to encrypt");
+    let encrypted = handler1.encrypt(plaintext).expect("Failed to encrypt");
 
     let result = handler2.decrypt(&encrypted);
     assert!(result.is_err());
@@ -119,7 +117,8 @@ fn test_encrypted_credential_serialization() {
 
     let serialized = credential.to_string();
     let deserialized =
-        api::crypto::EncryptedCredential::from_string(&serialized).expect("Failed to deserialize");
+        api::crypto::EncryptedCredential::from_string(&serialized)
+            .expect("Failed to deserialize");
 
     assert_eq!(credential, deserialized);
 }

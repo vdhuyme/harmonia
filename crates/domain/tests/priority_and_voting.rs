@@ -1,6 +1,6 @@
+use chrono::Utc;
 use domain::rules::*;
 use domain::{ProviderType, QueueItem, QueueStatus};
-use chrono::Utc;
 
 #[test]
 fn test_priority_score_no_votes_no_decay() {

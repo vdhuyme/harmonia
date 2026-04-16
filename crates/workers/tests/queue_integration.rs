@@ -1,7 +1,7 @@
 //! Integration tests for queue engine workflows
 
-use domain::{ProviderType, QueueItem, QueueStatus};
 use chrono::Utc;
+use domain::{ProviderType, QueueItem, QueueStatus};
 use workers::QueueEngine;
 
 fn create_queue_item(id: &str, priority: i32, votes: i32) -> QueueItem {
@@ -26,8 +26,8 @@ fn create_queue_item(id: &str, priority: i32, votes: i32) -> QueueItem {
 fn test_queue_selection_workflow() {
     // Create a mock queue with multiple songs
     let queue = vec![
-        create_queue_item("song1", 10, 0),  // Low priority
-        create_queue_item("song2", 50, 2),  // Medium + votes
+        create_queue_item("song1", 10, 0), // Low priority
+        create_queue_item("song2", 50, 2), // Medium + votes
         create_queue_item("song3", 100, 1), // High priority + vote
     ];
 

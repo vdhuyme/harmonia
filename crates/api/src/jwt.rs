@@ -1,6 +1,8 @@
 use crate::error::AppError;
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{
+    decode, encode, DecodingKey, EncodingKey, Header, Validation,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -26,7 +28,7 @@ impl Claims {
     pub fn new(user_id: String, role: String, expires_in_hours: i64) -> Self {
         let now = Utc::now();
         let exp = (now + Duration::hours(expires_in_hours)).timestamp();
-        
+
         Self {
             sub: user_id,
             role,
@@ -105,8 +107,12 @@ mod tests {
         let handler = JwtHandler::new(secret);
         let claims = Claims::new("user123".to_string(), "admin".to_string(), 1);
 
-        let token = handler.create_token(&claims).expect("Failed to create token");
-        let verified = handler.verify_token(&token).expect("Failed to verify token");
+        let token = handler
+            .create_token(&claims)
+            .expect("Failed to create token");
+        let verified = handler
+            .verify_token(&token)
+            .expect("Failed to verify token");
 
         assert_eq!(verified.sub, claims.sub);
         assert_eq!(verified.role, claims.role);
@@ -119,7 +125,9 @@ mod tests {
         let handler2 = JwtHandler::new(b"different-secret-key-1234567890");
         let claims = Claims::new("user123".to_string(), "user".to_string(), 1);
 
-        let token = handler1.create_token(&claims).expect("Failed to create token");
+        let token = handler1
+            .create_token(&claims)
+            .expect("Failed to create token");
         let result = handler2.verify_token(&token);
 
         assert!(result.is_err());
@@ -129,9 +137,10 @@ mod tests {
     fn test_claims_expiration() {
         let secret = b"test-secret-key-at-least-32-bytes-long";
         let handler = JwtHandler::new(secret);
-        
+
         // Create claims that expire in the past
-        let mut claims = Claims::new("user123".to_string(), "user".to_string(), -1);
+        let mut claims =
+            Claims::new("user123".to_string(), "user".to_string(), -1);
         // Manually set exp to past
         claims.exp = (Utc::now() - Duration::hours(1)).timestamp();
 

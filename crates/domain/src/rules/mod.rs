@@ -5,7 +5,10 @@ use crate::{QueueItem, Result};
 /// Calculate priority score for queue item
 /// Score = base_priority + (votes * 10) - (minutes_since_creation / 60)
 /// This ensures votes matter but old songs don't languish at bottom forever
-pub fn calculate_priority_score(item: &QueueItem, now: chrono::DateTime<chrono::Utc>) -> i32 {
+pub fn calculate_priority_score(
+    item: &QueueItem,
+    now: chrono::DateTime<chrono::Utc>,
+) -> i32 {
     let minutes_since_creation = (now - item.created_at).num_minutes() as i32;
     let time_decay = minutes_since_creation / 60;
     item.priority + (item.votes * 10) - time_decay

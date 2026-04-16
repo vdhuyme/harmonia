@@ -1,5 +1,5 @@
-use infrastructure::SpotifyProvider;
 use domain::traits::MusicProvider;
+use infrastructure::SpotifyProvider;
 
 #[test]
 fn test_spotify_provider_creation() {
@@ -12,7 +12,7 @@ fn test_spotify_provider_creation() {
 fn test_spotify_auth_header_format() {
     let provider = SpotifyProvider::new("my_token_12345".to_string());
     let header = provider.auth_header();
-    
+
     assert!(header.starts_with("Bearer "));
     assert!(header.contains("my_token_12345"));
 }
@@ -83,10 +83,10 @@ fn test_spotify_multiple_artists() {
 fn test_spotify_provider_instantiation_multiple_tokens() {
     let provider1 = SpotifyProvider::new("token1".to_string());
     let provider2 = SpotifyProvider::new("token2".to_string());
-    
+
     let header1 = provider1.auth_header();
     let header2 = provider2.auth_header();
-    
+
     assert_ne!(header1, header2);
     assert!(header1.contains("token1"));
     assert!(header2.contains("token2"));
@@ -95,7 +95,7 @@ fn test_spotify_provider_instantiation_multiple_tokens() {
 #[tokio::test]
 async fn test_spotify_provider_trait_implementation() {
     let provider = SpotifyProvider::new("test_token".to_string());
-    
+
     // Test that provider implements MusicProvider
     // This is more of a compile-time check
     let _provider_ref: &dyn MusicProvider = &provider;

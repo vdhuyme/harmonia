@@ -1,6 +1,6 @@
 use api::AppState;
-use tokio;
 use std::sync::Arc;
+use tokio;
 
 #[tokio::main]
 async fn main() {
@@ -13,7 +13,8 @@ async fn main() {
     tracing::info!("🎵 Music Queue Platform API Server");
 
     // In production, load from environment
-    let api_host = std::env::var("API_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let api_host =
+        std::env::var("API_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let api_port = std::env::var("API_PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()
@@ -24,8 +25,14 @@ async fn main() {
 
     // Create app state from environment
     let state = AppState::from_env();
-    tracing::info!("JWT secret configured: {}", 
-        if state.jwt_secret.len() > 20 { "custom" } else { "default (dev mode)" });
+    tracing::info!(
+        "JWT secret configured: {}",
+        if state.jwt_secret.len() > 20 {
+            "custom"
+        } else {
+            "default (dev mode)"
+        }
+    );
 
     // Build router
     let app = api::router(state);
@@ -35,8 +42,5 @@ async fn main() {
         .await
         .expect("Failed to bind to address");
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server failed");
+    axum::serve(listener, app).await.expect("Server failed");
 }
-

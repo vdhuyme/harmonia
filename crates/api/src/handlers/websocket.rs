@@ -1,21 +1,18 @@
+use axum::extract::ws::{Message, WebSocket};
 use axum::{
     extract::{Path, State, WebSocketUpgrade},
     response::IntoResponse,
     routing::get,
     Router,
 };
-use axum::extract::ws::{Message, WebSocket};
-use redis::aio::PubSub;
 use futures_util::StreamExt;
+use redis::aio::PubSub;
 
 use crate::state::AppState;
 
 /// Register the websocket route (to be called from the main API router)
 pub fn router() -> Router<AppState> {
-    Router::new().route(
-        "/ws/:room_id",
-        get(ws_handler),
-    )
+    Router::new().route("/ws/:room_id", get(ws_handler))
 }
 
 /// WebSocket upgrade handler
@@ -28,7 +25,11 @@ pub async fn ws_handler(
 }
 
 /// Core socket handling logic
-async fn handle_socket(mut socket: WebSocket, room_id: String, state: AppState) {
+async fn handle_socket(
+    mut socket: WebSocket,
+    room_id: String,
+    state: AppState,
+) {
     // 1. Create a PubSub connection
     let mut pubsub: PubSub = match state.redis.get_async_connection().await {
         Ok(conn) => match conn.into_pubsub() {

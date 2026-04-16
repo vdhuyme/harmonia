@@ -1,11 +1,7 @@
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Json,
-};
+use crate::{AppError, AppState};
+use axum::{extract::State, http::StatusCode, Json};
 use domain::{ConnectProviderRequest, MapRoomRequest};
 use serde::{Deserialize, Serialize};
-use crate::{AppError, AppState};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProviderAccountResponse {

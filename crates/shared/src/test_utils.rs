@@ -1,10 +1,10 @@
 //! Test utilities and fixtures
 
-use domain::{
-    User, Room, QueueItem, ProviderAccount, RoomMapping, Vote, 
-    ProviderType, QueueStatus
-};
 use chrono::Utc;
+use domain::{
+    ProviderAccount, ProviderType, QueueItem, QueueStatus, Room, RoomMapping,
+    User, Vote,
+};
 use uuid::Uuid;
 
 /// Create a test user
@@ -65,7 +65,10 @@ pub fn create_test_provider_account(user_id: &str) -> ProviderAccount {
 }
 
 /// Create a test room mapping
-pub fn create_test_room_mapping(room_id: &str, provider_account_id: &str) -> RoomMapping {
+pub fn create_test_room_mapping(
+    room_id: &str,
+    provider_account_id: &str,
+) -> RoomMapping {
     RoomMapping {
         id: Uuid::new_v4().to_string(),
         room_id: room_id.to_string(),

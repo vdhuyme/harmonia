@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use domain::traits::{MusicProvider, ProviderTrack};
 use domain::AppError;
-use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -80,31 +80,35 @@ impl SpotifyProvider {
     /// Get available devices for playback
     pub async fn get_devices(&self) -> Result<Vec<SpotifyDevice>, AppError> {
         let url = format!("{}/me/player/devices", self.base_url);
-        
+
         let response = self
             .http_client
             .get(&url)
             .header("Authorization", self.auth_header())
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify API error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify API error: {}",
+                response.status()
+            )));
         }
 
-        let devices: SpotifyDevices = response
-            .json()
-            .await
-            .map_err(|e| AppError::ProviderError(format!("Failed to parse devices: {}", e)))?;
+        let devices: SpotifyDevices = response.json().await.map_err(|e| {
+            AppError::ProviderError(format!("Failed to parse devices: {}", e))
+        })?;
 
         Ok(devices.devices)
     }
 
     /// Get currently playing track
-    pub async fn get_current_playback_internal(&self) -> Result<Option<SpotifyTrack>, AppError> {
+    pub async fn get_current_playback_internal(
+        &self,
+    ) -> Result<Option<SpotifyTrack>, AppError> {
         let url = format!("{}/me/player/currently-playing", self.base_url);
 
         let response = self
@@ -113,22 +117,24 @@ impl SpotifyProvider {
             .header("Authorization", self.auth_header())
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if response.status().as_u16() == 204 {
             return Ok(None);
         }
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify API error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify API error: {}",
+                response.status()
+            )));
         }
 
-        let playback: SpotifyPlayback = response
-            .json()
-            .await
-            .map_err(|e| AppError::ProviderError(format!("Failed to parse playback: {}", e)))?;
+        let playback: SpotifyPlayback = response.json().await.map_err(|e| {
+            AppError::ProviderError(format!("Failed to parse playback: {}", e))
+        })?;
 
         Ok(playback.item)
     }
@@ -137,9 +143,12 @@ impl SpotifyProvider {
 #[async_trait]
 impl MusicProvider for SpotifyProvider {
     /// Search for tracks on Spotify
-    async fn search(&self, query: &str) -> Result<Vec<ProviderTrack>, AppError> {
+    async fn search(
+        &self,
+        query: &str,
+    ) -> Result<Vec<ProviderTrack>, AppError> {
         let url = format!("{}/search", self.base_url);
-        
+
         let response = self
             .http_client
             .get(&url)
@@ -147,18 +156,24 @@ impl MusicProvider for SpotifyProvider {
             .query(&[("q", query), ("type", "track"), ("limit", "10")])
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify API error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify API error: {}",
+                response.status()
+            )));
         }
 
-        let results: SpotifySearchResults = response
-            .json()
-            .await
-            .map_err(|e| AppError::ProviderError(format!("Failed to parse search results: {}", e)))?;
+        let results: SpotifySearchResults =
+            response.json().await.map_err(|e| {
+                AppError::ProviderError(format!(
+                    "Failed to parse search results: {}",
+                    e
+                ))
+            })?;
 
         let tracks = results
             .tracks
@@ -167,7 +182,11 @@ impl MusicProvider for SpotifyProvider {
             .map(|t| ProviderTrack {
                 id: t.id,
                 title: t.name,
-                artist: t.artists.first().map(|a| a.name.clone()).unwrap_or_default(),
+                artist: t
+                    .artists
+                    .first()
+                    .map(|a| a.name.clone())
+                    .unwrap_or_default(),
                 duration_ms: 0,
             })
             .collect();
@@ -176,9 +195,13 @@ impl MusicProvider for SpotifyProvider {
     }
 
     /// Play a track on a device
-    async fn play(&self, device_id: &str, track_id: &str) -> Result<(), AppError> {
+    async fn play(
+        &self,
+        device_id: &str,
+        track_id: &str,
+    ) -> Result<(), AppError> {
         let url = format!("{}/me/player/play", self.base_url);
-        
+
         let body = serde_json::json!({
             "uris": [format!("spotify:track:{}", track_id)],
             "device_id": device_id
@@ -193,12 +216,15 @@ impl MusicProvider for SpotifyProvider {
             .json(&body)
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify play error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify play error: {}",
+                response.status()
+            )));
         }
 
         Ok(())
@@ -215,12 +241,15 @@ impl MusicProvider for SpotifyProvider {
             .query(&[("device_id", device_id)])
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify pause error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify pause error: {}",
+                response.status()
+            )));
         }
 
         Ok(())
@@ -237,25 +266,35 @@ impl MusicProvider for SpotifyProvider {
             .query(&[("device_id", device_id)])
             .send()
             .await
-            .map_err(|e| AppError::ProviderError(format!("Spotify API error: {}", e)))?;
+            .map_err(|e| {
+                AppError::ProviderError(format!("Spotify API error: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            return Err(AppError::ProviderError(
-                format!("Spotify skip error: {}", response.status()),
-            ));
+            return Err(AppError::ProviderError(format!(
+                "Spotify skip error: {}",
+                response.status()
+            )));
         }
 
         Ok(())
     }
 
     /// Get current playback info
-    async fn get_current_playback(&self, _device_id: &str) -> Result<Option<ProviderTrack>, AppError> {
+    async fn get_current_playback(
+        &self,
+        _device_id: &str,
+    ) -> Result<Option<ProviderTrack>, AppError> {
         let spotify_track = self.get_current_playback_internal().await?;
 
         Ok(spotify_track.map(|t| ProviderTrack {
             id: t.id,
             title: t.name,
-            artist: t.artists.first().map(|a| a.name.clone()).unwrap_or_default(),
+            artist: t
+                .artists
+                .first()
+                .map(|a| a.name.clone())
+                .unwrap_or_default(),
             duration_ms: 0,
         }))
     }

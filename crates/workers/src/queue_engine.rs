@@ -1,6 +1,6 @@
-use domain::{AppError, QueueItem, QueueStatus, Result};
-use chrono::Utc;
 use crate::redis_service::RedisService;
+use chrono::Utc;
+use domain::{AppError, QueueItem, QueueStatus, Result};
 
 /// Queue engine for managing playback and priority
 #[derive(Clone)]
@@ -17,7 +17,8 @@ impl QueueEngine {
     /// Score = base_priority + (votes * 10) - (minutes_since_creation / 60)
     pub fn calculate_priority_score(item: &QueueItem) -> i32 {
         let now = Utc::now();
-        let minutes_since_creation = (now - item.created_at).num_minutes() as i32;
+        let minutes_since_creation =
+            (now - item.created_at).num_minutes() as i32;
         let time_decay = minutes_since_creation / 60;
         item.priority + (item.votes * 10) - time_decay
     }
@@ -40,9 +41,10 @@ impl QueueEngine {
     /// Validate song can be played
     pub fn validate_song_for_playback(item: &QueueItem) -> Result<()> {
         if item.status != QueueStatus::Pending {
-            return Err(AppError::ValidationFailed(
-                format!("Song status is {}, not pending", item.status.as_str()),
-            ));
+            return Err(AppError::ValidationFailed(format!(
+                "Song status is {}, not pending",
+                item.status.as_str()
+            )));
         }
 
         if item.track_id.is_empty() {
@@ -55,7 +57,11 @@ impl QueueEngine {
     }
 
     /// Attempt to acquire queue lock for a room
-    pub async fn acquire_queue_lock(&self, room_id: &str, ttl_secs: usize) -> Result<bool> {
+    pub async fn acquire_queue_lock(
+        &self,
+        room_id: &str,
+        ttl_secs: usize,
+    ) -> Result<bool> {
         self.redis.acquire_lock(room_id, ttl_secs).await
     }
 
@@ -71,7 +77,11 @@ impl QueueEngine {
     }
 
     /// Broadcast song started event
-    pub async fn broadcast_song_started(&self, room_id: &str, track_id: &str) -> Result<()> {
+    pub async fn broadcast_song_started(
+        &self,
+        room_id: &str,
+        track_id: &str,
+    ) -> Result<()> {
         let channel = format!("event:song_started:{}", room_id);
         self.redis.publish_event(&channel, track_id).await
     }
@@ -88,7 +98,12 @@ mod tests {
     use super::*;
     use domain::ProviderType;
 
-    fn create_test_item(id: &str, priority: i32, votes: i32, age_minutes: i64) -> QueueItem {
+    fn create_test_item(
+        id: &str,
+        priority: i32,
+        votes: i32,
+        age_minutes: i64,
+    ) -> QueueItem {
         let now = Utc::now();
         let created_at = now - chrono::Duration::minutes(age_minutes);
 
@@ -170,7 +185,7 @@ mod tests {
     #[test]
     fn test_select_next_song_with_time_decay() {
         let items = vec![
-            create_test_item("1", 100, 0, 0), // Score: 100
+            create_test_item("1", 100, 0, 0),  // Score: 100
             create_test_item("2", 100, 0, 60), // Score: 99 (old)
         ];
         let result = QueueEngine::select_next_song(&items);

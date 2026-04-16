@@ -1,5 +1,8 @@
-use domain::{QueueItem, QueueStatus, Result, User, Room, ProviderAccount, RoomMapping, Vote};
 use chrono::Utc;
+use domain::{
+    ProviderAccount, QueueItem, QueueStatus, Result, Room, RoomMapping, User,
+    Vote,
+};
 
 /// Repository trait for generic CRUD operations
 #[async_trait::async_trait]
@@ -32,8 +35,14 @@ pub trait RoomRepository: Send + Sync {
 pub trait QueueItemRepository: Send + Sync {
     async fn find_by_id(&self, id: &str) -> Result<QueueItem>;
     async fn find_by_room(&self, room_id: &str) -> Result<Vec<QueueItem>>;
-    async fn find_pending_by_room(&self, room_id: &str) -> Result<Vec<QueueItem>>;
-    async fn find_currently_playing(&self, room_id: &str) -> Result<Option<QueueItem>>;
+    async fn find_pending_by_room(
+        &self,
+        room_id: &str,
+    ) -> Result<Vec<QueueItem>>;
+    async fn find_currently_playing(
+        &self,
+        room_id: &str,
+    ) -> Result<Option<QueueItem>>;
     async fn create(&self, item: QueueItem) -> Result<QueueItem>;
     async fn update_status(&self, id: &str, status: QueueStatus) -> Result<()>;
     async fn update_with_timestamps(
@@ -43,25 +52,43 @@ pub trait QueueItemRepository: Send + Sync {
         started_at: Option<chrono::DateTime<Utc>>,
     ) -> Result<()>;
     async fn increment_votes(&self, id: &str) -> Result<i32>;
-    async fn list_by_status(&self, room_id: &str, status: QueueStatus) -> Result<Vec<QueueItem>>;
+    async fn list_by_status(
+        &self,
+        room_id: &str,
+        status: QueueStatus,
+    ) -> Result<Vec<QueueItem>>;
 }
 
 /// Vote repository
 #[async_trait::async_trait]
 pub trait VoteRepository: Send + Sync {
-    async fn find_vote(&self, queue_item_id: &str, user_id: &str) -> Result<Option<Vote>>;
+    async fn find_vote(
+        &self,
+        queue_item_id: &str,
+        user_id: &str,
+    ) -> Result<Option<Vote>>;
     async fn create_vote(&self, vote: Vote) -> Result<Vote>;
-    async fn delete_vote(&self, queue_item_id: &str, user_id: &str) -> Result<()>;
+    async fn delete_vote(
+        &self,
+        queue_item_id: &str,
+        user_id: &str,
+    ) -> Result<()>;
     async fn count_votes(&self, queue_item_id: &str) -> Result<i32>;
-    async fn user_has_voted(&self, queue_item_id: &str, user_id: &str) -> Result<bool>;
+    async fn user_has_voted(
+        &self,
+        queue_item_id: &str,
+        user_id: &str,
+    ) -> Result<bool>;
 }
 
 /// Provider account repository
 #[async_trait::async_trait]
 pub trait ProviderAccountRepository: Send + Sync {
     async fn find_by_id(&self, id: &str) -> Result<ProviderAccount>;
-    async fn find_by_user(&self, user_id: &str) -> Result<Vec<ProviderAccount>>;
-    async fn create(&self, account: ProviderAccount) -> Result<ProviderAccount>;
+    async fn find_by_user(&self, user_id: &str)
+        -> Result<Vec<ProviderAccount>>;
+    async fn create(&self, account: ProviderAccount)
+        -> Result<ProviderAccount>;
     async fn update_token(
         &self,
         id: &str,

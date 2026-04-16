@@ -51,7 +51,10 @@ impl CryptoHandler {
     }
 
     /// Encrypt a plaintext credential
-    pub fn encrypt(&self, plaintext: &str) -> Result<EncryptedCredential, AppError> {
+    pub fn encrypt(
+        &self,
+        plaintext: &str,
+    ) -> Result<EncryptedCredential, AppError> {
         let mut rng = rand::thread_rng();
         let nonce_bytes: [u8; NONCE_SIZE] = rng.gen();
         let nonce = Nonce::from_slice(&nonce_bytes);
@@ -68,10 +71,13 @@ impl CryptoHandler {
     }
 
     /// Decrypt a credential
-    pub fn decrypt(&self, credential: &EncryptedCredential) -> Result<String, AppError> {
+    pub fn decrypt(
+        &self,
+        credential: &EncryptedCredential,
+    ) -> Result<String, AppError> {
         let nonce_bytes = hex::decode(&credential.nonce)
             .map_err(|_| AppError::DecryptionFailed)?;
-        
+
         if nonce_bytes.len() != NONCE_SIZE {
             return Err(AppError::DecryptionFailed);
         }
@@ -106,12 +112,8 @@ mod tests {
         let handler = CryptoHandler::new(&key);
         let plaintext = "spotify_token_abc123xyz";
 
-        let encrypted = handler
-            .encrypt(plaintext)
-            .expect("Encryption failed");
-        let decrypted = handler
-            .decrypt(&encrypted)
-            .expect("Decryption failed");
+        let encrypted = handler.encrypt(plaintext).expect("Encryption failed");
+        let decrypted = handler.decrypt(&encrypted).expect("Decryption failed");
 
         assert_eq!(decrypted, plaintext);
     }
@@ -133,10 +135,10 @@ mod tests {
     fn test_decrypt_with_wrong_key_fails() {
         let key1 = generate_key();
         let key2 = generate_key();
-        
+
         let handler1 = CryptoHandler::new(&key1);
         let handler2 = CryptoHandler::new(&key2);
-        
+
         let plaintext = "spotify_token_abc123xyz";
         let encrypted = handler1.encrypt(plaintext).expect("Encryption failed");
 

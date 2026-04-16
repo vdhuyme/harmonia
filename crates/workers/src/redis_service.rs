@@ -1,6 +1,6 @@
 //! Redis-based services for distributed locking, pub/sub, and caching
 
-use domain::{Result, AppError};
+use domain::{AppError, Result};
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
 
@@ -78,7 +78,11 @@ impl RedisService {
     }
 
     /// Publish event to Redis pub/sub channel
-    pub async fn publish_event(&self, channel: &str, message: &str) -> Result<()> {
+    pub async fn publish_event(
+        &self,
+        channel: &str,
+        message: &str,
+    ) -> Result<()> {
         let _: i32 = redis::cmd("PUBLISH")
             .arg(channel)
             .arg(message)
@@ -90,7 +94,11 @@ impl RedisService {
     }
 
     /// Cache queue for a room
-    pub async fn cache_queue(&self, room_id: &str, queue_json: &str) -> Result<()> {
+    pub async fn cache_queue(
+        &self,
+        room_id: &str,
+        queue_json: &str,
+    ) -> Result<()> {
         let key = format!("queue:{}", room_id);
         let _: () = redis::cmd("SET")
             .arg(&key)
@@ -105,7 +113,10 @@ impl RedisService {
     }
 
     /// Get cached queue for a room
-    pub async fn get_cached_queue(&self, room_id: &str) -> Result<Option<String>> {
+    pub async fn get_cached_queue(
+        &self,
+        room_id: &str,
+    ) -> Result<Option<String>> {
         let key = format!("queue:{}", room_id);
         let value: Option<String> = redis::cmd("GET")
             .arg(&key)
@@ -129,7 +140,11 @@ impl RedisService {
     }
 
     /// Increment rate limit counter for user
-    pub async fn check_rate_limit(&self, user_id: &str, limit_per_min: i32) -> Result<bool> {
+    pub async fn check_rate_limit(
+        &self,
+        user_id: &str,
+        limit_per_min: i32,
+    ) -> Result<bool> {
         let key = format!("rate_limit:{}", user_id);
         let count: i32 = redis::cmd("INCR")
             .arg(&key)

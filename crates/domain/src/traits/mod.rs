@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::Result;
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,5 +16,8 @@ pub trait MusicProvider: Send + Sync {
     async fn play(&self, device_id: &str, track_id: &str) -> Result<()>;
     async fn pause(&self, device_id: &str) -> Result<()>;
     async fn skip(&self, device_id: &str) -> Result<()>;
-    async fn get_current_playback(&self, device_id: &str) -> Result<Option<ProviderTrack>>;
+    async fn get_current_playback(
+        &self,
+        device_id: &str,
+    ) -> Result<Option<ProviderTrack>>;
 }

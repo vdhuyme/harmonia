@@ -5,3 +5,5 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+uuid = { workspace = true }
+validator = { workspace = true }

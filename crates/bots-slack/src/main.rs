@@ -3,6 +3,7 @@ use infrastructure::QueueEngine;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct SlackEvent {
     #[serde(rename = "type")]
@@ -12,14 +13,17 @@ struct SlackEvent {
     text: Option<String>,
 }
 
-#[derive(Serialize)]
+#[allow(dead_code)]
+#[derive(Deserialize, Serialize)]
 struct SlackMessage {
     channel: String,
     text: String,
 }
 
 struct SlackBot {
+    #[allow(dead_code)]
     token: String,
+    #[allow(dead_code)]
     queue_engine: Arc<QueueEngine>,
 }
 
@@ -31,10 +35,11 @@ impl SlackBot {
         }
     }
 
+    #[allow(dead_code)]
     async fn handle_command(
         &self,
         command: &str,
-        user_id: &str,
+        _user_id: &str,
     ) -> DomainResult<String> {
         let parts: Vec<&str> = command.split_whitespace().collect();
 

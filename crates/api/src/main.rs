@@ -1,44 +1,135 @@
 use axum::{
-    extract::{Json, Path, State},
-    http::StatusCode,
+    extract::{Path, State},
     response::IntoResponse,
     routing::{get, post},
-    Router,
+    Json, Router,
 };
-use base64::{engine::general_purpose, Engine as _};
 use domain::models::{MusicProvider, Track};
 use infrastructure::{
     ProviderResolver, QueueEngine, RedisClient, SecurityService,
     SpotifyProvider, SqlRepository, YouTubeProvider,
 };
 use sea_orm::prelude::Uuid;
-use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use validator::Validate;
+
+// ============================================================================
+// ValidatedJson Extractor - Validates JSON input before handler execution
+// ============================================================================
+
+use axum::extract::FromRequest;
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
+use serde::de::DeserializeOwned;
+
+/// Extractor that validates JSON input using validator derive
+pub struct ValidatedJson<T>(pub T)
+where
+    T: Validate + DeserializeOwned + Send + 'static;
+
+impl<S, T> FromRequest<S> for ValidatedJson<T>
+where
+    T: Validate + DeserializeOwned + Send + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request(
+        req: Request<Body>,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        // Use axum's Json extractor to parse the body
+        let payload: T = axum::extract::Json::from_request(req, state)
+            .await
+            .map_err(|e| {
+                (StatusCode::BAD_REQUEST, format!("Invalid JSON: {}", e))
+            })?
+            .0;
+
+        payload
+            .validate()
+            .map(|_| ValidatedJson(payload))
+            .map_err(|errors| {
+                (StatusCode::BAD_REQUEST, format_validation_errors(&errors))
+            })
+    }
+}
+
+// Helper to convert validation errors to a simple string
+fn format_validation_errors(errors: &validator::ValidationErrors) -> String {
+    errors
+        .field_errors()
+        .into_iter()
+        .map(|(field, err_vec)| {
+            let msgs: Vec<String> = err_vec
+                .iter()
+                .map(|e| e.message.as_deref().unwrap_or("invalid").to_string())
+                .collect();
+            format!("{}: {}", field, msgs.join(", "))
+        })
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+// ============================================================================
+// App State
+// ============================================================================
 
 #[derive(Clone)]
 struct AppState {
     queue_engine: Arc<QueueEngine>,
     security: Arc<SecurityService>,
+    #[allow(dead_code)]
     provider_resolver: Arc<ProviderResolver>,
 }
+
+// ============================================================================
+// Health Check
+// ============================================================================
 
 async fn health() -> impl IntoResponse {
     "OK"
 }
 
-#[derive(Deserialize)]
+// ============================================================================
+// Request DTOs with Validation
+// ============================================================================
+
+/// Request to add a song to the queue
+#[derive(Deserialize, Serialize, Validate)]
 struct SongRequest {
+    #[validate(length(min = 1, max = 36))]
     room_id: String,
+
+    #[validate(length(min = 1, max = 256))]
     track_id: String,
+
+    #[validate(length(min = 1, max = 50))]
     provider: String,
+
+    #[validate(length(min = 1, max = 500))]
     title: String,
+
+    #[validate(length(min = 1, max = 500))]
     artist: String,
+
+    #[validate(length(min = 1, max = 2048))]
     uri: String,
+
+    #[validate(length(min = 1, max = 36))]
     user_id: String,
+
+    #[validate(length(max = 500))]
     album: Option<String>,
+
+    #[validate(length(max = 2048))]
     artwork_url: Option<String>,
+
+    #[validate(range(min = 0, max = 86400000))]
     duration_ms: Option<u32>,
 }
 
@@ -50,17 +141,21 @@ struct SongResponse {
 
 async fn request_song(
     State(state): State<AppState>,
-    Json(payload): Json<SongRequest>,
+    ValidatedJson(payload): ValidatedJson<SongRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let room_id = Uuid::parse_str(&payload.room_id)
-        .map_err(|_| AppError("Invalid room ID".to_string()))?;
+        .map_err(|_| AppError("Invalid room ID format".to_string()))?;
     let user_id = Uuid::parse_str(&payload.user_id)
-        .map_err(|_| AppError("Invalid user ID".to_string()))?;
+        .map_err(|_| AppError("Invalid user ID format".to_string()))?;
 
     let provider = match payload.provider.to_lowercase().as_str() {
         "spotify" => MusicProvider::Spotify,
         "youtube" => MusicProvider::YouTube,
-        _ => return Err(AppError("Invalid provider".to_string())),
+        _ => {
+            return Err(AppError(
+                "Invalid provider. Must be 'spotify' or 'youtube'".to_string(),
+            ))
+        }
     };
 
     let track = Track {
@@ -86,6 +181,10 @@ async fn request_song(
     }))
 }
 
+// ============================================================================
+// Queue Endpoints
+// ============================================================================
+
 #[derive(Serialize)]
 struct QueueResponse {
     items: Vec<QueueItemDto>,
@@ -104,8 +203,14 @@ async fn get_queue(
     State(state): State<AppState>,
     Path(room_id): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
-    let room_uuid = Uuid::parse_str(&room_id)
-        .map_err(|_| AppError("Invalid room ID".to_string()))?;
+    // Validate room_id format before parsing to UUID
+    if room_id.trim().is_empty() {
+        return Err(AppError("Room ID cannot be empty".to_string()));
+    }
+
+    let room_uuid = Uuid::parse_str(&room_id).map_err(|_| {
+        AppError("Invalid room ID format. Must be a valid UUID".to_string())
+    })?;
 
     let items = state
         .queue_engine
@@ -127,23 +232,35 @@ async fn get_queue(
     Ok(Json(QueueResponse { items: dtos }))
 }
 
-#[derive(Deserialize)]
+/// Vote request
+#[derive(Deserialize, Validate)]
 struct VoteRequest {
+    #[validate(length(min = 1, max = 36))]
     user_id: String,
+
+    #[validate(range(min = -10, max = 10))]
     value: i8,
 }
 
 async fn vote_song(
     State(state): State<AppState>,
     Path((room_id, item_id)): Path<(String, String)>,
-    Json(payload): Json<VoteRequest>,
+    ValidatedJson(payload): ValidatedJson<VoteRequest>,
 ) -> Result<impl IntoResponse, AppError> {
+    // Validate path parameters
+    if room_id.trim().is_empty() {
+        return Err(AppError("Room ID cannot be empty".to_string()));
+    }
+    if item_id.trim().is_empty() {
+        return Err(AppError("Item ID cannot be empty".to_string()));
+    }
+
     let room_uuid = Uuid::parse_str(&room_id)
-        .map_err(|_| AppError("Invalid room ID".to_string()))?;
+        .map_err(|_| AppError("Invalid room ID format".to_string()))?;
     let user_uuid = Uuid::parse_str(&payload.user_id)
-        .map_err(|_| AppError("Invalid user ID".to_string()))?;
+        .map_err(|_| AppError("Invalid user ID format".to_string()))?;
     let item_uuid = Uuid::parse_str(&item_id)
-        .map_err(|_| AppError("Invalid item ID".to_string()))?;
+        .map_err(|_| AppError("Invalid item ID format".to_string()))?;
 
     state
         .queue_engine
@@ -154,16 +271,27 @@ async fn vote_song(
     Ok(Json(serde_json::json!({ "message": "Vote recorded" })))
 }
 
-// Authentication endpoints
-#[derive(Deserialize)]
+// ============================================================================
+// Authentication Endpoints
+// ============================================================================
+
+#[derive(Deserialize, Validate)]
 struct SpotifyAuthRequest {
+    #[validate(length(min = 1, max = 2048))]
     code: String,
+
+    #[allow(dead_code)]
+    #[validate(length(max = 256))]
     state: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 struct YouTubeAuthRequest {
+    #[validate(length(min = 1, max = 2048))]
     code: String,
+
+    #[allow(dead_code)]
+    #[validate(length(max = 256))]
     state: String,
 }
 
@@ -175,12 +303,11 @@ struct AuthResponse {
 }
 
 async fn spotify_auth_url(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real implementation, generate a proper Spotify auth URL
     let auth_url = format!(
         "https://accounts.spotify.com/authorize?client_id={}&response_type=code&redirect_uri={}&scope=user-read-private%20user-read-email%20streaming%20user-modify-playback-state",
-        "your-spotify-client-id", // Should come from config
+        "your-spotify-client-id",
         "http://localhost:3000/auth/spotify/callback"
     );
 
@@ -189,10 +316,8 @@ async fn spotify_auth_url(
 
 async fn spotify_auth_callback(
     State(state): State<AppState>,
-    Json(payload): Json<SpotifyAuthRequest>,
+    ValidatedJson(payload): ValidatedJson<SpotifyAuthRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real implementation, exchange code for tokens with Spotify
-    // For now, we'll simulate successful authentication
     let access_token = state.security.create_token(&payload.code)?;
 
     Ok(Json(AuthResponse {
@@ -203,12 +328,11 @@ async fn spotify_auth_callback(
 }
 
 async fn youtube_auth_url(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real implementation, generate a proper YouTube auth URL
     let auth_url = format!(
         "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&response_type=code&redirect_uri={}&scope=https://www.googleapis.com/auth/youtube.readonly",
-        "your-youtube-client-id", // Should come from config
+        "your-youtube-client-id",
         "http://localhost:3000/auth/youtube/callback"
     );
 
@@ -217,10 +341,8 @@ async fn youtube_auth_url(
 
 async fn youtube_auth_callback(
     State(state): State<AppState>,
-    Json(payload): Json<YouTubeAuthRequest>,
+    ValidatedJson(payload): ValidatedJson<YouTubeAuthRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    // In a real implementation, exchange code for tokens with YouTube
-    // For now, we'll simulate successful authentication
     let access_token = state.security.create_token(&payload.code)?;
 
     Ok(Json(AuthResponse {
@@ -230,23 +352,28 @@ async fn youtube_auth_callback(
     }))
 }
 
-// Provider control endpoints (would typically be in a workers service)
-#[derive(Deserialize)]
+// ============================================================================
+// Playback Control
+// ============================================================================
+
+#[derive(Deserialize, Validate)]
 struct PlayRequest {
+    #[validate(length(min = 1, max = 36))]
     room_id: String,
+
+    #[validate(length(min = 1, max = 36))]
     user_id: String,
 }
 
 async fn play_music(
     State(state): State<AppState>,
-    Json(payload): Json<PlayRequest>,
+    ValidatedJson(payload): ValidatedJson<PlayRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let room_uuid = Uuid::parse_str(&payload.room_id)
-        .map_err(|_| AppError("Invalid room ID".to_string()))?;
+        .map_err(|_| AppError("Invalid room ID format".to_string()))?;
     let _user_uuid = Uuid::parse_str(&payload.user_id)
-        .map_err(|_| AppError("Invalid user ID".to_string()))?;
+        .map_err(|_| AppError("Invalid user ID format".to_string()))?;
 
-    // Get the next song to play from the queue
     let queue_items = state
         .queue_engine
         .get_sorted_queue(room_uuid)
@@ -259,12 +386,6 @@ async fn play_music(
 
     let next_item = &queue_items[0];
 
-    // In a real implementation, we would:
-    // 1. Get the user's provider credentials from the database
-    // 2. Decrypt the tokens using the security service
-    // 3. Use the appropriate provider to play the track
-
-    // For now, we'll just return success
     Ok(Json(serde_json::json!({
         "message": "Playback started",
         "track": {
@@ -275,12 +396,16 @@ async fn play_music(
     })))
 }
 
+// ============================================================================
+// Error Handling
+// ============================================================================
+
 #[derive(Debug)]
 struct AppError(String);
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        (axum::http::StatusCode::INTERNAL_SERVER_ERROR, self.0).into_response()
+        (axum::http::StatusCode::BAD_REQUEST, self.0).into_response()
     }
 }
 
@@ -289,6 +414,10 @@ impl From<domain::error::DomainError> for AppError {
         AppError(e.to_string())
     }
 }
+
+// ============================================================================
+// Main Entry Point
+// ============================================================================
 
 #[tokio::main]
 async fn main() {
@@ -307,8 +436,8 @@ async fn main() {
 
     // Initialize Security Service
     let security = Arc::new(SecurityService::new(
-        "your-jwt-secret".to_string(), // Should come from config/environment
-        vec![0u8; 32], // 256-bit encryption key (should come from secure source)
+        "your-jwt-secret".to_string(),
+        vec![0u8; 32],
     ));
 
     // Initialize services

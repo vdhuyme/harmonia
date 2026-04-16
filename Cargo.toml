@@ -62,6 +62,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # Serialization
 chrono = { version = "0.4", features = ["serde"] }
 
+# Validation
+validator = { version = "0.20", features = ["derive"] }
+
 # Internal Workspace Crates
 domain = { path = "crates/domain" }
 entities = { path = "crates/entities" }

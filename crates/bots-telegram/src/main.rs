@@ -1,29 +1,36 @@
 use domain::error::DomainResult;
 use infrastructure::QueueEngine;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::Arc;
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct TelegramUpdate {
     message: Option<TelegramMessage>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct TelegramMessage {
     text: Option<String>,
     chat: Chat,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct Chat {
     id: i64,
 }
 
 struct TelegramBot {
+    #[allow(dead_code)]
     api_client: Client,
+    #[allow(dead_code)]
     token: String,
+    #[allow(dead_code)]
     api_url: String,
+    #[allow(dead_code)]
     queue_engine: Arc<QueueEngine>,
 }
 
@@ -37,6 +44,7 @@ impl TelegramBot {
         }
     }
 
+    #[allow(dead_code)]
     async fn handle_message(
         &self,
         message: TelegramMessage,

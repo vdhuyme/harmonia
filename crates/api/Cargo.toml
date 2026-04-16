@@ -20,5 +20,6 @@ db = { workspace = true }
 shared = { workspace = true }
 base64 = { workspace = true }
 sea-orm = { workspace = true }
+validator = { workspace = true }
 
 [dev-dependencies]

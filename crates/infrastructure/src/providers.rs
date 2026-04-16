@@ -2,8 +2,6 @@ use crate::security::SecurityService;
 use async_trait::async_trait;
 use domain::error::{DomainError, DomainResult};
 use domain::models::Track;
-use reqwest;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 /// Generic Music Provider trait
@@ -15,7 +13,9 @@ pub trait MusicProvider: Send + Sync {
 
 /// Spotify Provider Adapter
 pub struct SpotifyProvider {
+    #[allow(dead_code)]
     client: reqwest::Client,
+    #[allow(dead_code)]
     security: Arc<SecurityService>,
 }
 
@@ -30,13 +30,13 @@ impl SpotifyProvider {
 
 #[async_trait]
 impl MusicProvider for SpotifyProvider {
-    async fn search_tracks(&self, query: &str) -> DomainResult<Vec<Track>> {
+    async fn search_tracks(&self, _query: &str) -> DomainResult<Vec<Track>> {
         // Placeholder implementation - In real implementation, call Spotify API
         // Use self.security to decrypt stored tokens if needed
         Ok(vec![])
     }
 
-    async fn get_track(&self, track_id: &str) -> DomainResult<Track> {
+    async fn get_track(&self, _track_id: &str) -> DomainResult<Track> {
         // Placeholder - Call Spotify API
         Err(DomainError::NotFound("Track not found".to_string()))
     }
@@ -44,7 +44,9 @@ impl MusicProvider for SpotifyProvider {
 
 /// YouTube Provider Adapter
 pub struct YouTubeProvider {
+    #[allow(dead_code)]
     client: reqwest::Client,
+    #[allow(dead_code)]
     api_key: String,
 }
 
@@ -59,13 +61,13 @@ impl YouTubeProvider {
 
 #[async_trait]
 impl MusicProvider for YouTubeProvider {
-    async fn search_tracks(&self, query: &str) -> DomainResult<Vec<Track>> {
+    async fn search_tracks(&self, _query: &str) -> DomainResult<Vec<Track>> {
         // Placeholder - Call YouTube Data API
         // URL: https://www.googleapis.com/youtube/v3/search
         Ok(vec![])
     }
 
-    async fn get_track(&self, track_id: &str) -> DomainResult<Track> {
+    async fn get_track(&self, _track_id: &str) -> DomainResult<Track> {
         // Placeholder - Call YouTube API
         Err(DomainError::NotFound("Track not found".to_string()))
     }

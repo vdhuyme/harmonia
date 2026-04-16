@@ -116,10 +116,11 @@ impl QueueEngine {
         }
 
         // Check if user already voted
-        if let Ok(_) = self
+        if self
             .repo
             .get_vote_by_user_and_queue_item(user_id, queue_item_id)
             .await
+            .is_ok()
         {
             return Err(DomainError::ValidationError(
                 "User already voted for this track".to_string(),

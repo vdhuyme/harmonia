@@ -17,6 +17,12 @@ pub struct RoomWebSocketState {
     pub tx: broadcast::Sender<RoomEvent>,
 }
 
+impl Default for RoomWebSocketState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RoomWebSocketState {
     pub fn new() -> Self {
         let (tx, _) = broadcast::channel(100);
@@ -29,7 +35,7 @@ impl RoomWebSocketState {
 #[serde(tag = "type", content = "payload")]
 pub enum RoomEvent {
     QueueUpdated(Vec<QueueItem>),
-    SongStarted(QueueItem),
+    SongStarted(Box<QueueItem>),
     SongEnded,
     UserJoined(String),
     UserLeft(String),
@@ -84,6 +90,12 @@ async fn handle_socket(socket: WebSocket, state: Arc<RoomWebSocketState>) {
 /// Manager for all room WebSocket states
 pub struct WebSocketManager {
     rooms: std::collections::HashMap<Uuid, Arc<RoomWebSocketState>>,
+}
+
+impl Default for WebSocketManager {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WebSocketManager {

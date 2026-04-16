@@ -7,6 +7,7 @@ use tokio::time::sleep;
 
 /// Queue Worker: Polls the database for rooms with active queues and processes them
 pub struct QueueWorker {
+    #[allow(dead_code)]
     repo: Arc<dyn Repository>,
     check_interval_secs: u64,
 }

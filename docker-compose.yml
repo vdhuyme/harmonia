@@ -4,13 +4,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-harmonia}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-harmonia}
-      POSTGRES_DB: ${POSTGRES_DB:-harmonia}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-harmonia}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,18 +34,18 @@ services:
       context: .
       dockerfile: Dockerfile.api
     ports:
-      - "${API_PORT:-3000}:3000"
+      - "${API_HOST_PORT}:${API_PORT}"
     environment:
-      API_HOST: 0.0.0.0
-      API_PORT: 3000
-      DATABASE_URL: postgres://${POSTGRES_USER:-harmonia}:${POSTGRES_PASSWORD:-harmonia}@postgres:5432/${POSTGRES_DB:-harmonia}
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
-      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:-spotify-client-id}
-      SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI:-http://localhost:3000/auth/spotify/callback}
-      YOUTUBE_CLIENT_ID: ${YOUTUBE_CLIENT_ID:-youtube-client-id}
-      YOUTUBE_REDIRECT_URI: ${YOUTUBE_REDIRECT_URI:-http://localhost:3000/auth/youtube/callback}
-      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-youtube-api-key}
+      API_HOST: ${API_HOST}
+      API_PORT: ${API_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_REDIRECT_URI: ${SPOTIFY_REDIRECT_URI}
+      YOUTUBE_CLIENT_ID: ${YOUTUBE_CLIENT_ID}
+      YOUTUBE_REDIRECT_URI: ${YOUTUBE_REDIRECT_URI}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,9 +59,9 @@ services:
       context: .
       dockerfile: Dockerfile.workers
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-harmonia}:${POSTGRES_PASSWORD:-harmonia}@postgres:5432/${POSTGRES_DB:-harmonia}
-      REDIS_URL: redis://redis:6379
-      WORKER_CHECK_INTERVAL_SECS: ${WORKER_CHECK_INTERVAL_SECS:-10}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      WORKER_CHECK_INTERVAL_SECS: ${WORKER_CHECK_INTERVAL_SECS}
     depends_on:
       postgres:
         condition: service_healthy

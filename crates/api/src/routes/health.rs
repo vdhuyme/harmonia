@@ -7,6 +7,14 @@ pub fn router() -> Router<AppState> {
     Router::new().route("/health", get(health))
 }
 
-async fn health() -> impl IntoResponse {
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is healthy", body = String)
+    )
+)]
+pub async fn health() -> impl IntoResponse {
     "OK"
 }

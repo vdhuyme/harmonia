@@ -1,5 +1,17 @@
 # Music Queue Platform – Full Implementation Plan (Architecture-First)
 
+## OpenAPI
+
+- Runtime docs UI: `/docs`
+- Runtime OpenAPI JSON: `/docs/openapi.json`
+- Generate file manually:
+
+```bash
+make openapi-gen
+```
+
+Generated file path: `docs/openapi.json`
+
 ## Overview
 
 A **distributed music orchestration platform** supporting:

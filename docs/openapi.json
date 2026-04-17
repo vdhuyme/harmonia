@@ -1,0 +1,589 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "api",
+    "description": "",
+    "contact": {
+      "name": "Music Platform Team"
+    },
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/spotify/callback": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "spotify_auth_callback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpotifyAuthRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Spotify auth callback result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/spotify/url": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "spotify_auth_url",
+        "responses": {
+          "200": {
+            "description": "Spotify OAuth URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUrlResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/youtube/callback": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "youtube_auth_callback",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/YouTubeAuthRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "YouTube auth callback result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/youtube/url": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "youtube_auth_url",
+        "responses": {
+          "200": {
+            "description": "YouTube OAuth URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUrlResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/play": {
+      "post": {
+        "tags": [
+          "Playback"
+        ],
+        "operationId": "play_music",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Playback started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybackResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queue/{room_id}": {
+      "get": {
+        "tags": [
+          "Queue"
+        ],
+        "operationId": "get_queue",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "description": "Room id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sorted queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queue/{room_id}/items/{item_id}/vote": {
+      "post": {
+        "tags": [
+          "Queue"
+        ],
+        "operationId": "vote_song",
+        "parameters": [
+          {
+            "name": "room_id",
+            "in": "path",
+            "description": "Room id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "description": "Queue item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Vote recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/songs/request": {
+      "post": {
+        "tags": [
+          "Queue"
+        ],
+        "operationId": "request_song",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SongRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Song added to queue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SongResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthResponseDto": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "refresh_token": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthUrlResponseDto": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "MessageResponseDto": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PlayRequestDto": {
+        "type": "object",
+        "required": [
+          "room_id",
+          "user_id"
+        ],
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "PlaybackResponseDto": {
+        "type": "object",
+        "required": [
+          "message",
+          "track"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "track": {
+            "$ref": "#/components/schemas/PlaybackTrackDto"
+          }
+        }
+      },
+      "PlaybackTrackDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "artist"
+        ],
+        "properties": {
+          "artist": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "QueueItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "artist",
+          "votes",
+          "added_by"
+        ],
+        "properties": {
+          "added_by": {
+            "type": "string"
+          },
+          "artist": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "votes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "QueueResponseDto": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueueItemDto"
+            }
+          }
+        }
+      },
+      "RoomPathDto": {
+        "type": "object",
+        "required": [
+          "room_id"
+        ],
+        "properties": {
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SongRequestDto": {
+        "type": "object",
+        "required": [
+          "room_id",
+          "track_id",
+          "provider",
+          "title",
+          "artist",
+          "uri",
+          "user_id"
+        ],
+        "properties": {
+          "album": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "artist": {
+            "type": "string"
+          },
+          "artwork_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duration_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "provider": {
+            "type": "string"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "track_id": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SongResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "message"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "SpotifyAuthRequestDto": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "VotePathDto": {
+        "type": "object",
+        "required": [
+          "room_id",
+          "item_id"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "VoteRequestDto": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "value"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "value": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "YouTubeAuthRequestDto": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "Queue",
+      "description": "Queue management endpoints"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Playback",
+      "description": "Playback control endpoints"
+    }
+  ]
+}

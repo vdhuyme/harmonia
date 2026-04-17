@@ -1,10 +1,11 @@
 use domain::models::{MusicProvider, Track};
 use serde::{Deserialize, Serialize};
 use shared::validation::{validate_non_empty_string, validate_provider};
+use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct SongRequestDto {
     pub room_id: Uuid,
 
@@ -53,24 +54,24 @@ impl SongRequestDto {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct SongResponseDto {
     pub id: String,
     pub message: String,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct RoomPathDto {
     pub room_id: Uuid,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct VotePathDto {
     pub room_id: Uuid,
     pub item_id: Uuid,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct VoteRequestDto {
     pub user_id: Uuid,
 
@@ -78,12 +79,12 @@ pub struct VoteRequestDto {
     pub value: i8,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct QueueResponseDto {
     pub items: Vec<QueueItemDto>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct QueueItemDto {
     pub id: String,
     pub title: String,
@@ -92,7 +93,7 @@ pub struct QueueItemDto {
     pub added_by: String,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct SpotifyAuthRequestDto {
     #[validate(length(min = 1, max = 2048))]
     pub code: String,
@@ -101,7 +102,7 @@ pub struct SpotifyAuthRequestDto {
     pub state: Option<String>,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct YouTubeAuthRequestDto {
     #[validate(length(min = 1, max = 2048))]
     pub code: String,
@@ -110,17 +111,40 @@ pub struct YouTubeAuthRequestDto {
     pub state: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct AuthResponseDto {
     pub access_token: String,
     pub refresh_token: String,
     pub expires_in: i64,
 }
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct PlayRequestDto {
     pub room_id: Uuid,
     pub user_id: Uuid,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct AuthUrlResponseDto {
+    pub url: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct MessageResponseDto {
+    pub message: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct PlaybackTrackDto {
+    pub id: String,
+    pub title: String,
+    pub artist: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct PlaybackResponseDto {
+    pub message: String,
+    pub track: PlaybackTrackDto,
 }
 
 fn provider_from_string(provider: &str) -> MusicProvider {

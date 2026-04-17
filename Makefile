@@ -18,6 +18,9 @@ deps-up:
 deps-down:
 	docker compose -f docker-compose.yml -f docker-compose.host.yml stop postgres redis
 
+openapi-gen:
+	cargo run -p api -- --export-openapi docs/openapi.json
+
 test:
 	cargo test --workspace
 
@@ -38,7 +41,7 @@ clippy:
 
 # Usage: make run APP=your-crate-name
 
-.PHONY: run run-local deps-up deps-down test build clean help check fmt clippy
+.PHONY: run run-local deps-up deps-down openapi-gen test build clean help check fmt clippy
 
 help:
 	@echo "Makefile commands:"
@@ -46,6 +49,7 @@ help:
 	@echo "               make run APP=workers"
 	@echo "  deps-up    - Start postgres/redis in Docker for local host run"
 	@echo "  deps-down  - Stop postgres/redis Docker dependencies"
+	@echo "  openapi-gen- Generate docs/openapi.json from API OpenAPI spec"
 	@echo "  run-local  - Run API on host with Docker DB/Redis (localhost:9003)"
 	@echo "               make run-local POSTGRES_HOST_PORT=55432 REDIS_HOST_PORT=56379 API_HOST_PORT=9003"
 	@echo "  test       - Run all tests"

@@ -83,6 +83,10 @@ mockall = "0.14.0"
 tokio-test = "0.4"
 futures-util = "0.3"
 
+# Open API
+utoipa = { version = "5.4.0", features = ["axum_extras", "uuid"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+
 [profile.release]
 opt-level = 3
 lto = true

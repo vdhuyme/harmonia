@@ -1,6 +1,6 @@
 use crate::dto::{
-    QueueItemDto, QueueResponseDto, RoomPathDto, SongRequestDto,
-    SongResponseDto, VotePathDto, VoteRequestDto,
+    MessageResponseDto, QueueItemDto, QueueResponseDto, RoomPathDto,
+    SongRequestDto, SongResponseDto, VotePathDto, VoteRequestDto,
 };
 use crate::error::AppError;
 use crate::extractors::{ValidatedJson, ValidatedPath};
@@ -16,7 +16,16 @@ pub fn router() -> Router<AppState> {
         .route("/queue/{room_id}/items/{item_id}/vote", post(vote_song))
 }
 
-async fn request_song(
+#[utoipa::path(
+    post,
+    path = "/songs/request",
+    tag = "Queue",
+    request_body = SongRequestDto,
+    responses(
+        (status = 200, description = "Song added to queue", body = SongResponseDto)
+    )
+)]
+pub async fn request_song(
     State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<SongRequestDto>,
 ) -> Result<Json<SongResponseDto>, AppError> {
@@ -35,7 +44,18 @@ async fn request_song(
     }))
 }
 
-async fn get_queue(
+#[utoipa::path(
+    get,
+    path = "/queue/{room_id}",
+    tag = "Queue",
+    params(
+        ("room_id" = uuid::Uuid, Path, description = "Room id")
+    ),
+    responses(
+        (status = 200, description = "Sorted queue", body = QueueResponseDto)
+    )
+)]
+pub async fn get_queue(
     State(state): State<AppState>,
     ValidatedPath(path): ValidatedPath<RoomPathDto>,
 ) -> Result<Json<QueueResponseDto>, AppError> {
@@ -55,15 +75,30 @@ async fn get_queue(
     Ok(Json(QueueResponseDto { items }))
 }
 
-async fn vote_song(
+#[utoipa::path(
+    post,
+    path = "/queue/{room_id}/items/{item_id}/vote",
+    tag = "Queue",
+    params(
+        ("room_id" = uuid::Uuid, Path, description = "Room id"),
+        ("item_id" = uuid::Uuid, Path, description = "Queue item id")
+    ),
+    request_body = VoteRequestDto,
+    responses(
+        (status = 200, description = "Vote recorded", body = MessageResponseDto)
+    )
+)]
+pub async fn vote_song(
     State(state): State<AppState>,
     ValidatedPath(path): ValidatedPath<VotePathDto>,
     ValidatedJson(payload): ValidatedJson<VoteRequestDto>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<MessageResponseDto>, AppError> {
     state
         .queue_service
         .vote_song(path.room_id, payload.user_id, path.item_id, payload.value)
         .await?;
 
-    Ok(Json(serde_json::json!({ "message": "Vote recorded" })))
+    Ok(Json(MessageResponseDto {
+        message: "Vote recorded".to_string(),
+    }))
 }

@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
+application = { workspace = true }
 domain = { workspace = true }
 entities = { workspace = true }
 shared = { workspace = true }

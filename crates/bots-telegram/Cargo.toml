@@ -8,6 +8,7 @@ authors.workspace = true
 tokio = { workspace = true, features = ["full"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+application = { workspace = true }
 domain = { workspace = true }
 infrastructure = { workspace = true }
 db = { workspace = true }

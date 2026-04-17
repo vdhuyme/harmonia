@@ -6,8 +6,11 @@ authors.workspace = true
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
+application = { workspace = true }
 domain = { workspace = true }
 db = { workspace = true }
 infrastructure = { workspace = true }
 shared = { workspace = true }
+sea-orm = { workspace = true }
 tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

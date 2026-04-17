@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/domain",
+    "crates/application",
     "crates/entities",
     "crates/db",
     "crates/api",
@@ -67,6 +68,7 @@ validator = { version = "0.20", features = ["derive"] }
 
 # Internal Workspace Crates
 domain = { path = "crates/domain" }
+application = { path = "crates/application" }
 entities = { path = "crates/entities" }
 db = { path = "crates/db" }
 infrastructure = { path = "crates/infrastructure" }

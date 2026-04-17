@@ -1,5 +1,5 @@
+use application::QueueService;
 use domain::error::DomainResult;
-use infrastructure::QueueEngine;
 use reqwest::Client;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -31,16 +31,16 @@ struct TelegramBot {
     #[allow(dead_code)]
     api_url: String,
     #[allow(dead_code)]
-    queue_engine: Arc<QueueEngine>,
+    queue_service: Arc<QueueService>,
 }
 
 impl TelegramBot {
-    pub fn new(token: String, queue_engine: Arc<QueueEngine>) -> Self {
+    pub fn new(token: String, queue_service: Arc<QueueService>) -> Self {
         Self {
             api_client: Client::new(),
             token,
             api_url: "https://api.telegram.org/bot".to_string(),
-            queue_engine,
+            queue_service,
         }
     }
 
@@ -58,11 +58,11 @@ impl TelegramBot {
                         "Telegram request to play track: {}",
                         parts[1]
                     );
-                    // In a real implementation, we would call queue_engine.add_song
+                    // In a real implementation, we would call queue_service.add_song
                 }
             } else if text == "/queue" {
                 tracing::info!("Telegram request to see queue");
-                // In a real implementation, we would call queue_engine.get_sorted_queue
+                // In a real implementation, we would call queue_service.get_sorted_queue
             }
         }
         Ok(())
@@ -92,8 +92,10 @@ async fn main() {
     .await
     .unwrap();
     let repo = Arc::new(infrastructure::SqlRepository::new(db));
-    let queue_engine = Arc::new(QueueEngine::new(repo, Arc::new(redis)));
+    let lock_manager =
+        Arc::new(infrastructure::RedisLockManager::new(Arc::new(redis)));
+    let queue_service = Arc::new(QueueService::new(repo, lock_manager));
 
-    let bot = TelegramBot::new(token, queue_engine);
+    let bot = TelegramBot::new(token, queue_service);
     bot.run().await;
 }

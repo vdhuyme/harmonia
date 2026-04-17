@@ -1,21 +1,39 @@
+# Default crate (can be overridden with APP variable)
+APP ?= api
+
 run:
-	cargo run
+	cargo run -p $(APP)
 
 test:
-	cargo test
+	cargo test --workspace
 
 build:
-	cargo build --release
+	cargo build --workspace --release
 
 clean:
 	cargo clean
 
-.PHONY: run test build clean
+check:
+	cargo check --workspace
+
+fmt:
+	cargo fmt --all
+
+clippy:
+	cargo clippy --all -- -D warnings
+
+# Usage: make run APP=your-crate-name
+
+.PHONY: run test build clean help check fmt clippy
 
 help:
 	@echo "Makefile commands:"
-	@echo "  run   - Run the application"
-	@echo "  test  - Run tests"
-	@echo "  build - Build the application in release mode"
-	@echo "  clean - Clean the build artifacts"
-	@echo "  help  - Show this help message"
+	@echo "  run        - Run a crate (default: api)"
+	@echo "               make run APP=workers"
+	@echo "  test       - Run all tests"
+	@echo "  build      - Build all crates (release)"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  check      - Check compile بسرعة"
+	@echo "  fmt        - Format code"
+	@echo "  clippy     - Lint code"
+	@echo "  help       - Show this help"

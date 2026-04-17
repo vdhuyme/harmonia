@@ -1,5 +1,5 @@
+use application::QueueService;
 use domain::error::DomainResult;
-use infrastructure::QueueEngine;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -24,14 +24,14 @@ struct SlackBot {
     #[allow(dead_code)]
     token: String,
     #[allow(dead_code)]
-    queue_engine: Arc<QueueEngine>,
+    queue_service: Arc<QueueService>,
 }
 
 impl SlackBot {
-    pub fn new(token: String, queue_engine: Arc<QueueEngine>) -> Self {
+    pub fn new(token: String, queue_service: Arc<QueueService>) -> Self {
         Self {
             token,
-            queue_engine,
+            queue_service,
         }
     }
 
@@ -85,8 +85,10 @@ async fn main() {
     .await
     .unwrap();
     let repo = Arc::new(infrastructure::SqlRepository::new(db));
-    let queue_engine = Arc::new(QueueEngine::new(repo, Arc::new(redis)));
+    let lock_manager =
+        Arc::new(infrastructure::RedisLockManager::new(Arc::new(redis)));
+    let queue_service = Arc::new(QueueService::new(repo, lock_manager));
 
-    let bot = SlackBot::new(token, queue_engine);
+    let bot = SlackBot::new(token, queue_service);
     bot.run().await;
 }

@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 
+[[bin]]
+name = "db"
+path = "src/main.rs"
+
 [dependencies]
 domain = { workspace = true }
 entities = { workspace = true }
